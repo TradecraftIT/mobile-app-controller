@@ -25,6 +25,21 @@ def build_where(criteria=None):
     return to_return
 
 
+def build_set(criteria=None):
+    """
+       Builds a SET clause with holders e.g.
+       set foo=?,bar=?
+    :param criteria:
+    :return:
+    """
+    to_return = ""
+    if criteria:
+        to_return = " SET "
+        delimeter = " = ? , "
+        to_return += delimeter.join(criteria.keys())
+        to_return += " = ?"
+    return to_return
+
 def get_salt():
     """
         Generates a salt that can be used for passwords
