@@ -1,4 +1,4 @@
-from sqlutils import get_connection, Constants, build_where,hash_password
+from .sqlutils import get_connection, Constants, build_where, hash_password
 
 
 class UserDAO:
@@ -6,13 +6,48 @@ class UserDAO:
     def __init__(self):
         pass
 
+    def user_exists(self, email_address=None, facebook_id=None, twitter_id=None, user_id=None):
+        """
+           Determines if this user exists or not based on supplied criteria
+        :param email_address:
+        :param facebook_id:
+        :param twitter_id:
+        :param user_id:
+        :return:
+        """
+        conn = get_connection()
+        criteria = {}
+        if email_address:
+            criteria['username'] = email_address
+        if facebook_id:
+            criteria['facebook_id'] = facebook_id
+        if twitter_id:
+            criteria['twitter_id'] = twitter_id
+        if user_id:
+            criteria['id'] = user_id
+        if len(criteria) > 0:
+            with conn.cursor(try_plain_query=True) as cursor:
+                cursor.execute("SELECT COUNT(1), ID FROM " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
+                               + build_where(criteria), criteria.values())
+                for row in cursor:
+                    if row[0] > 0:
+                            return {"exists": True, "id": row[1]}
+        return {"exists": False, "id": -1}
+
     def insert(self, email_address=None, password=None, facebook_id=None, twitter_id=None):
         conn = get_connection()
         with conn.cursor(try_plain_query=True) as cursor:
-            hashed = hash_password(password)
-            cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
-                           + "(username, password, salt, facebook_id, twitter_id) VALUES(?,?,?,?,?)"
-                           , (email_address, hashed['hashed_password'], hashed['salt'], facebook_id, twitter_id))
+            existence_check = self.user_exists(email_address, facebook_id, twitter_id)
+            print(existence_check)
+            if not existence_check['exists']:
+                hashed = hash_password(password)
+                cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
+                               + "(username, password, salt, facebook_id, twitter_id) VALUES(?,?,?,?,?)"
+                               , (email_address, hashed['hashed_password'], hashed['salt'], facebook_id, twitter_id))
+                user_id = cursor.lastrowid
+            else:
+                user_id = existence_check['id']
+        return user_id
 
     def delete(self):
         pass
@@ -23,6 +58,7 @@ class UserDAO:
     def find(self, criteria=None):
         conn = get_connection()
         with conn.cursor(try_plain_query=True) as cursor:
+            print(criteria.values())
             cursor.execute("select * from " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
                            + build_where(criteria), criteria.values())
             print()
@@ -34,6 +70,7 @@ class UserDAO:
 def main():
     dao = UserDAO()
     dict = {"username": 'test@test.com'}
+    dao.user_exists(email_address='test@test.com')
    # dao.find(dict)
    # dao.insert('t@t.com', 'password', 'uuu', 'aaa')
 
