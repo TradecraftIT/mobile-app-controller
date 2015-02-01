@@ -1,38 +1,57 @@
 from enum import Enum
 import hashlib
+import oursql
 import uuid
 
 
-class SQLUtils():
+def get_connection():
+    return oursql.connect(host='localhost', port=3306, user='root',
+                          passwd='', db='mysql')
+
+
+def build_where(criteria=None):
     """
-        Common functions that other SQL related operations can use
+      Generates a where clause with holders e.g.
+      where foo=? and bar=?
+    :param criteria:
+    :return:
     """
-    def __init__(self):
-        pass
+    to_return = ""
+    if criteria:
+        to_return = " WHERE "
+        delimeter = " = ? AND "
+        to_return += delimeter.join(criteria.keys())
+        to_return += " = ?"
+    return to_return
 
-    def get_salt(self):
-        """
-            Generates a salt that can be used for passwords
-        :return:  The generated salt
-        """
-        return uuid.uuid4().hex
 
-    def hash_password(self, password=None):
-        """
-            Attempts to hash a password
-        :return: The hashed password as well as the associated salt
-        """
-        mapping = {'hashed_password': '', 'salt': ''}
-        if password:
-            salt = self.get_salt()
-            hashed_password = hashlib.sha512(password + salt).hexdigest()
-            mapping['hashed_password'] = hashed_password
-            mapping['salt'] = salt
-        return mapping
+def get_salt():
+    """
+        Generates a salt that can be used for passwords
+    :return:  The generated salt
+    """
+    return uuid.uuid4().hex
 
-    class Constants(Enum):
-        """
-            Holds constants that are database related.  This prevents magic string from appearing
-            everywhere
-        """
-        SCHEMA_NAME = "fanmobi"
+
+def hash_password(password=None, salt=None):
+    """
+        Attempts to hash a password
+    :return: The hashed password as well as the associated salt
+    """
+    mapping = {'hashed_password': None, 'salt': None}
+    if password:
+        if not salt:
+            salt = get_salt()
+        hashed_password = hashlib.sha512(password.encode('UTF-8') + salt.encode('UTF-8')).hexdigest()
+        mapping['hashed_password'] = hashed_password
+        mapping['salt'] = salt
+    return mapping
+
+
+class Constants(Enum):
+    """
+        Holds constants that are database related.  This prevents magic string from appearing
+        everywhere
+    """
+    SCHEMA_NAME = "fanmobi"
+    USERS = "users"
