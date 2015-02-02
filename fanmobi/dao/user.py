@@ -8,6 +8,19 @@ class UserDAO:
     def __init__(self):
         pass
 
+    def connected_to(self, user_id=None):
+        """
+        Retrieves the users connected to the supplied user ID
+        :param user_id:
+        :return:
+        """
+        conn = get_connection()
+        with conn.cursor(try_plain_query=True) as cursor:
+            criteria = {"user": user_id}
+            cursor.execute("SELECT USERNAME,ID,FACEBOOK_ID,TWITTER_ID FROM "
+                           + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
+                           + build_where(criteria), criteria.values())
+        pass
 
     def link(self, user_id=None, artist_id=None, disconnect=False):
         """

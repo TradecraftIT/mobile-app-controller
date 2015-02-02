@@ -57,6 +57,8 @@ class UserHandler(tornado.web.RequestHandler):
         """
         data = escape.json_decode(self.request.body)
         print(data)
+        dao = user.UserDAO()
+        dao.connected_to
 
     def put(self):
         if not self.request.body:
