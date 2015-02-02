@@ -7,7 +7,30 @@ class UserDAO:
     def __init__(self):
         pass
 
-    def user_exists(self, email_address=None, facebook_id=None, twitter_id=None, user_id=None):
+    def login(self, email_address=None, password=None):
+        """
+           Determines whether the user sucessfully logged in with an email address
+           and password
+        :param email_address:
+        :param password:
+        :return: True if the credentials are valid, False otherwise
+        """
+        conn = get_connection()
+        if not (email_address or password):
+            return False
+        with conn.cursor(try_plain_query=True) as cursor:
+            criteria = {"username": email_address}
+            cursor.execute("SELECT SALT FROM " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
+                           + build_where(criteria), criteria.values())
+            for row in cursor:
+                if not row[0]:
+                    return False
+                salt = row[0]
+                hashed = hash_password(password=password, salt=salt)
+                return self.user_exists(email_address=email_address, password=hashed['hashed_password'])['exists']
+        return False
+
+    def user_exists(self, email_address=None, password=None, facebook_id=None, twitter_id=None, user_id=None):
         """
            Determines if this user exists or not based on supplied criteria
         :param email_address:
@@ -20,6 +43,8 @@ class UserDAO:
         criteria = {}
         if email_address:
             criteria['username'] = email_address
+            if password:
+                criteria['password'] = password
         elif facebook_id:
             criteria['facebook_id'] = facebook_id
         elif twitter_id:
@@ -28,6 +53,8 @@ class UserDAO:
             criteria['id'] = user_id
         if len(criteria) > 0:
             with conn.cursor(try_plain_query=True) as cursor:
+                print(criteria.values())
+                print(build_where(criteria))
                 cursor.execute("SELECT COUNT(1), ID FROM " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
                                + build_where(criteria), criteria.values())
                 for row in cursor:
@@ -77,7 +104,6 @@ class UserDAO:
     def find(self, criteria=None):
         conn = get_connection()
         with conn.cursor(try_plain_query=True) as cursor:
-            print(criteria.values())
             cursor.execute("select * from " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
                            + build_where(criteria), criteria.values())
             print()
