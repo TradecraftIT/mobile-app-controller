@@ -6,6 +6,11 @@ import uuid
 
 
 class FollowerHandler(tornado.web.RequestHandler):
+    def get(self):
+        data = escape.json_decode(self.request.body)
+        dao = user.UserDAO()
+        artist_id = str(self.request.uri).split("/")[2]
+
     def delete(self):
         data = escape.json_decode(self.request.body)
         dao = user.UserDAO()
@@ -45,6 +50,14 @@ class UserHandler(tornado.web.RequestHandler):
        Responsible for handling the User API calls
     """
 
+    def post(self):
+        """
+        Returns all artist to which the user is connected.
+        :return:
+        """
+        data = escape.json_decode(self.request.body)
+        print(data)
+
     def put(self):
         if not self.request.body:
             data = {"email": None, "password": None, "facebook-id": None, "twitter-id": None}
@@ -59,7 +72,8 @@ application = tornado.web.Application([
     (r"/artist/login", ArtistLoginHandler),
     (r"/artist/logout", ArtistLogoutHandler),
     (r"/artists/[0-9]+/connected", FollowerHandler),
-    (r"/user/", UserHandler)
+    (r"/user/", UserHandler),
+    (r"/user/connected", UserHandler),
 ], cookie_secret="YOU_NEED_A_VALUE_HERE")
 
 if __name__ == "__main__":
