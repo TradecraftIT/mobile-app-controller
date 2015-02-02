@@ -6,6 +6,12 @@ import uuid
 
 
 class FollowerHandler(tornado.web.RequestHandler):
+    def delete(self):
+        data = escape.json_decode(self.request.body)
+        dao = user.UserDAO()
+        artist_id = str(self.request.uri).split("/")[2]
+        dao.link(user_id=data['user-id'], artist_id=artist_id, disconnect=True)
+
     def put(self):
         data = escape.json_decode(self.request.body)
         dao = user.UserDAO()

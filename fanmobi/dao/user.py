@@ -8,23 +8,38 @@ class UserDAO:
     def __init__(self):
         pass
 
-    def link(self, user_id=None, artist_id=None):
+
+    def link(self, user_id=None, artist_id=None, disconnect=False):
         """
-          Creates a bi-directional link between user and artist
+          Creates a bi-directional link between user and artist.  If disconnect is True
+          instead removes the bi-directional link.
         :param user_id:
         :param artist_id:
+        :param disconnect - should a link be removed
         :return:
         """
         conn = get_connection()
         with conn.cursor(try_plain_query=True) as cursor:
-            try:
-                cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.USER_CONNECTIONS.value +
-                               "(user,connected_to) VALUES(?,?)", (user_id, artist_id))
+            if not disconnect:
+                try:
+                    cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.USER_CONNECTIONS.value +
+                                   "(user,connected_to) VALUES(?,?)", (user_id, artist_id))
 
-                cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.USER_CONNECTIONS.value +
-                               "(user,connected_to) VALUES(?,?)", (artist_id, user_id))
-            except IntegrityError:
-                print("Duplicate key")
+                    cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.USER_CONNECTIONS.value +
+                                   "(user,connected_to) VALUES(?,?)", (artist_id, user_id))
+                except IntegrityError:
+                    print("Duplicate key")
+            else:
+                try:
+                    criteria = {"user": user_id, "connected_to": artist_id}
+                    cursor.execute("DELETE FROM " + Constants.SCHEMA_NAME.value+"."+Constants.USER_CONNECTIONS.value +
+                                   build_where(criteria), (criteria.values()))
+                    criteria["user"] = artist_id
+                    criteria["connected_to"] = user_id
+                    cursor.execute("DELETE FROM " + Constants.SCHEMA_NAME.value+"."+Constants.USER_CONNECTIONS.value +
+                                   build_where(criteria), (criteria.values()))
+                except IntegrityError:
+                    print("Failed link removal")
 
     def login(self, email_address=None, password=None):
         """
