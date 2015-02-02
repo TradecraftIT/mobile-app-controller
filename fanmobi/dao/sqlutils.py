@@ -6,7 +6,7 @@ import uuid
 
 def get_connection():
     return oursql.connect(host='localhost', port=3306, user='root',
-                          passwd='password', db='mysql')
+                          passwd='!@#QWE123qwe', db='mysql')
 
 
 def build_where(criteria=None):
@@ -70,3 +70,4 @@ class Constants(Enum):
     """
     SCHEMA_NAME = "fanmobi"
     USERS = "users"
+    USER_CONNECTIONS= "user_connections"
