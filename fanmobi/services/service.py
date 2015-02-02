@@ -1,13 +1,16 @@
 import tornado.escape as escape
 import tornado.ioloop
-import tornado.httpserver
 import tornado.web
 from fanmobi.dao import user
 import uuid
-import os
 
 
-class ArtistHandler(tornado.web.RequestHandler):
+class ArtistLogoutHandler(tornado.web.RequestHandler):
+    def put(self):
+        self.clear_cookie("mycookie")
+
+
+class ArtistLoginHandler(tornado.web.RequestHandler):
     def put(self):
         data = escape.json_decode(self.request.body)
         dao = user.UserDAO()
@@ -40,15 +43,11 @@ class UserHandler(tornado.web.RequestHandler):
         self.write("{ \"user_id\": \"" + str(generated_id) + "\" }")
 
 application = tornado.web.Application([
-    (r"/artist/login", ArtistHandler),
+    (r"/artist/login", ArtistLoginHandler),
+    (r"/artist/logout", ArtistLogoutHandler),
     (r"/user/", UserHandler)
 ], cookie_secret="YOU_NEED_A_VALUE_HERE")
 
-http_server = tornado.httpserver.HTTPServer(application,
-                                            ssl_options={
-                                                "certfile": os.path.join("C:\\Users\\Travis\\", "cert.pem"),
-                                                "keyfile": os.path.join("C:\\Users\\Travis\\", "test.pem")
-                                            })
 if __name__ == "__main__":
     application.listen(10000)
     tornado.ioloop.IOLoop.instance().start()
