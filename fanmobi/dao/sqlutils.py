@@ -6,7 +6,7 @@ import uuid
 
 def get_connection():
     return oursql.connect(host='localhost', port=3306, user='root',
-                          passwd='!@#QWE123qwe', db='mysql')
+                          passwd='password', db='mysql')
 
 
 def build_where(criteria=None):
