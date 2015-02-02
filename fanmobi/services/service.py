@@ -5,6 +5,14 @@ from fanmobi.dao import user
 import uuid
 
 
+class FollowerHandler(tornado.web.RequestHandler):
+    def put(self):
+        data = escape.json_decode(self.request.body)
+        dao = user.UserDAO()
+        artist_id = str(self.request.uri).split("/")[2]
+        dao.link(user_id=data['user-id'], artist_id=artist_id)
+
+
 class ArtistLogoutHandler(tornado.web.RequestHandler):
     def put(self):
         self.clear_cookie("mycookie")
@@ -14,7 +22,6 @@ class ArtistLoginHandler(tornado.web.RequestHandler):
     def put(self):
         data = escape.json_decode(self.request.body)
         dao = user.UserDAO()
-        print(data)
         if not data or not dao.login(email_address=data['email'], password=data['password']):
             self.write("{ \"message\": \"Email and password don't match.\"} ")
         else:
@@ -24,7 +31,7 @@ class ArtistLoginHandler(tornado.web.RequestHandler):
                 self.write("{ \"auth-token\": \""+str(self.get_secure_cookie("mycookie"))+"\"} ")
             else:
                 self.write("{ \"auth-token\": \""+str(self.get_secure_cookie("mycookie"))+"\"} ")
-        print(self.get_secure_cookie("mycookie"))
+        dao.upsert(email_address=data['email'], cookie=str(self.get_secure_cookie("mycookie")))
 
 
 class UserHandler(tornado.web.RequestHandler):
@@ -45,6 +52,7 @@ class UserHandler(tornado.web.RequestHandler):
 application = tornado.web.Application([
     (r"/artist/login", ArtistLoginHandler),
     (r"/artist/logout", ArtistLogoutHandler),
+    (r"/artists/[0-9]+/connected", FollowerHandler),
     (r"/user/", UserHandler)
 ], cookie_secret="YOU_NEED_A_VALUE_HERE")
 

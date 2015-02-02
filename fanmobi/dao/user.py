@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from oursql import IntegrityError
 from .sqlutils import get_connection, Constants, build_where, hash_password,build_set
 
 
@@ -6,6 +7,24 @@ class UserDAO:
 
     def __init__(self):
         pass
+
+    def link(self, user_id=None, artist_id=None):
+        """
+          Creates a bi-directional link between user and artist
+        :param user_id:
+        :param artist_id:
+        :return:
+        """
+        conn = get_connection()
+        with conn.cursor(try_plain_query=True) as cursor:
+            try:
+                cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.USER_CONNECTIONS.value +
+                               "(user,connected_to) VALUES(?,?)", (user_id, artist_id))
+
+                cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.USER_CONNECTIONS.value +
+                               "(user,connected_to) VALUES(?,?)", (artist_id, user_id))
+            except IntegrityError:
+                print("Duplicate key")
 
     def login(self, email_address=None, password=None):
         """
@@ -63,7 +82,7 @@ class UserDAO:
                             return {"exists": True, "id": row[1]}
         return {"exists": False, "id": -1}
 
-    def upsert(self, email_address=None, password=None, facebook_id=None, twitter_id=None):
+    def upsert(self, cookie=None, email_address=None, password=None, facebook_id=None, twitter_id=None):
         """
           Updates or inserts a new record depending on if the user was found
         :param email_address:
@@ -91,6 +110,8 @@ class UserDAO:
                     criteria['facebook_id'] = facebook_id
                 if twitter_id:
                     criteria['twitter_id'] = twitter_id
+                if cookie:
+                    criteria['cookie'] = cookie
                 set_clause = build_set(criteria)
                 criteria['ID'] = user_id
                 cursor.execute("UPDATE " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value

@@ -1,18 +1,19 @@
 CREATE SCHEMA `fanmobi` ;
 
-CREATE TABLE `fanmobi`.`users` (
+CREATE TABLE `fanmobi`.`users`(
   `ID` int(11) NOT NULL AUTO_INCREMENT,
-  `username` varchar(255) DEFAULT NULL,
+  `username` varchar(45) DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
   `salt` varchar(255) DEFAULT NULL,
-  `facebook_id` varchar(255) DEFAULT NULL,
-  `twitter_id` varchar(255) DEFAULT NULL,
+  `facebook_id` varchar(45) DEFAULT NULL,
+  `twitter_id` varchar(45) DEFAULT NULL,
+  `cookie` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`ID`),
   UNIQUE KEY `salt_UNIQUE` (`salt`),
   UNIQUE KEY `username_UNIQUE` (`username`),
   UNIQUE KEY `facebook_id_UNIQUE` (`facebook_id`),
   UNIQUE KEY `twitter_id_UNIQUE` (`twitter_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='the users of the system.  The username will be an email address';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8 COMMENT='the users of the system.  The username will be an email address';
 
 
 
