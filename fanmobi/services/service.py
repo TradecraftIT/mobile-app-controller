@@ -7,9 +7,9 @@ import uuid
 
 class FollowerHandler(tornado.web.RequestHandler):
     def get(self):
-        data = escape.json_decode(self.request.body)
         dao = user.UserDAO()
         artist_id = str(self.request.uri).split("/")[2]
+        self.write(dao.connected_to(user_id=artist_id, is_artist=True))
 
     def delete(self):
         data = escape.json_decode(self.request.body)
@@ -58,7 +58,7 @@ class UserHandler(tornado.web.RequestHandler):
         data = escape.json_decode(self.request.body)
         print(data)
         dao = user.UserDAO()
-        dao.connected_to
+        dao.connected_to()
 
     def put(self):
         if not self.request.body:
