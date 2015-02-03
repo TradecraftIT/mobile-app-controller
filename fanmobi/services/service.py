@@ -28,23 +28,19 @@ class ArtistLogoutHandler(tornado.web.RequestHandler):
     def put(self):
         data = escape.json_decode(self.request.body)
         dao = user.UserDAO()
-        dao.upsert(cookie=data['auth-token'],logout=True)
+        dao.upsert(cookie=data['auth-token'], logout=True)
 
 
 class ArtistLoginHandler(tornado.web.RequestHandler):
     def put(self):
         data = escape.json_decode(self.request.body)
         dao = user.UserDAO()
+        cookie = str(uuid.uuid4())
         if not data or not dao.login(email_address=data['email'], password=data['password']):
             self.write("{ \"message\": \"Email and password don't match.\"} ")
         else:
-            if not self.get_secure_cookie("mycookie"):
-                cookie = str(uuid.uuid4())
-                self.set_secure_cookie("mycookie", cookie)
-                self.write("{ \"auth-token\": \""+str(self.get_secure_cookie("mycookie"))+"\"} ")
-            else:
-                self.write("{ \"auth-token\": \""+str(self.get_secure_cookie("mycookie"))+"\"} ")
-        dao.upsert(email_address=data['email'], cookie=str(self.get_secure_cookie("mycookie")))
+            self.write("{ \"auth-token\": \""+cookie+"\"} ")
+        dao.upsert(email_address=data['email'], cookie=cookie)
 
 
 class UserHandler(tornado.web.RequestHandler):
