@@ -1,6 +1,11 @@
 from collections import OrderedDict
+import json
 from oursql import IntegrityError
 from .sqlutils import get_connection, Constants, build_where, hash_password,build_set
+
+
+def xstr(s):
+    return '' if s is None else str(s)
 
 
 class UserDAO:
@@ -8,6 +13,54 @@ class UserDAO:
     def __init__(self):
         pass
 
+    def connected_to(self, user_id=None, is_artist=False):
+        """
+        Retrieves the users connected to the supplied user ID
+        :param user_id:
+        :return:
+        """
+        conn = get_connection()
+        with conn.cursor(try_plain_query=True) as cursor:
+            criteria = {"connected_to": int(user_id)}
+            print(int(user_id))
+            if is_artist:
+                response = """
+            {
+                   'followers': [
+                   """
+                cursor.execute("SELECT USERNAME,FACEBOOK_ID,TWITTER_ID FROM "
+                               + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
+                               + " where ID IN ( SELECT USER FROM " + Constants.SCHEMA_NAME.value
+                               + "." + Constants.USER_CONNECTIONS.value + " WHERE CONNECTED_TO = ?"
+                               + ")", criteria.values())
+                matches = []
+                for row in cursor:
+                    current = '{'
+                    current += "'email': \"" + xstr(row[0]) + '\", '
+                    current += "'facebook-id': \"" + xstr(row[1]) + '\", '
+                    current += "'twitter-id': \"" + xstr(row[2]) +"\""
+                    current += '}'
+                    matches.append(current)
+                response += ', '.join(matches)
+            else:
+                response = """
+            {
+                   'artists': [{
+                   """
+                cursor.execute("SELECT USERNAME,ID,FACEBOOK_ID,TWITTER_ID FROM "
+                               + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
+                               + build_where(criteria), criteria.values())
+                for row in cursor:
+                    pass
+
+        response += """
+                ]
+            }
+                    """
+        response = response.replace("'", '"')
+        print('Response: ' + response)
+        response = json.loads(response)
+        return response
 
     def link(self, user_id=None, artist_id=None, disconnect=False):
         """
