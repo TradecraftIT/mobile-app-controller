@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import json
 from oursql import IntegrityError
+import uuid
 from .sqlutils import get_connection, Constants, build_where, hash_password,build_set
 
 
@@ -58,7 +59,6 @@ class UserDAO:
                                + ")", criteria.values())
 
                 matches = []
-                match_dict = {}
                 for row in cursor:
                     current = '{'
                     current += "'id': \"" + xstr(row[0]) + '\", '
@@ -121,7 +121,7 @@ class UserDAO:
         """
         conn = get_connection()
         if not (email_address or password):
-            return False
+            return {"authenticated": False, "token": None}
         with conn.cursor(try_plain_query=True) as cursor:
             criteria = {"username": email_address}
             cursor.execute("SELECT SALT FROM " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
@@ -131,12 +131,20 @@ class UserDAO:
                     return False
                 salt = row[0]
                 hashed = hash_password(password=password, salt=salt)
-                return self.user_exists(email_address=email_address, password=hashed['hashed_password'])['exists']
-        return False
+                authed = self.user_exists(email_address=email_address, password=hashed['hashed_password'])['exists']
+                token = None
+                if authed:
+                    token = uuid.uuid4()
+                    self.upsert(cookie=token, email_address=email_address)
+                return {"authenticated": authed,
+                        "token": token}
+        return {"authenticated": False, "token": None}
 
-    def user_exists(self, email_address=None, password=None, facebook_id=None, twitter_id=None, user_id=None):
+
+    def user_exists(self, auth_token=None, email_address=None, password=None, facebook_id=None, twitter_id=None, user_id=None):
         """
            Determines if this user exists or not based on supplied criteria
+        :param auth_token: - since the auth token is a UUID this should be guaranteed unique
         :param email_address:
         :param facebook_id:
         :param twitter_id:
@@ -155,6 +163,8 @@ class UserDAO:
             criteria['twitter_id'] = twitter_id
         elif user_id:
             criteria['id'] = user_id
+        elif auth_token:
+            criteria['cookie'] = auth_token
         if len(criteria) > 0:
             with conn.cursor(try_plain_query=True) as cursor:
                 print(criteria.values())
@@ -167,18 +177,20 @@ class UserDAO:
                             return {"exists": True, "id": row[1]}
         return {"exists": False, "id": -1}
 
-    def upsert(self, cookie=None, email_address=None, password=None, facebook_id=None, twitter_id=None):
+    def upsert(self, cookie=None, email_address=None, password=None, facebook_id=None, twitter_id=None, logout=False):
         """
           Updates or inserts a new record depending on if the user was found
         :param email_address:
         :param password:
         :param facebook_id:
         :param twitter_id:
+        :param logout - Should log out this user
         :return: The user ID affected by this operation
         """
         conn = get_connection()
         with conn.cursor(try_plain_query=True) as cursor:
-            existence_check = self.user_exists(email_address, facebook_id, twitter_id)
+            existence_check = self.user_exists(auth_token=cookie, email_address=email_address,
+                                               facebook_id=facebook_id, twitter_id=twitter_id)
             print(existence_check)
             if not existence_check['exists']:
                 hashed = hash_password(password)
@@ -199,6 +211,8 @@ class UserDAO:
                     criteria['cookie'] = cookie
                 set_clause = build_set(criteria)
                 criteria['ID'] = user_id
+                if logout:
+                    criteria['cookie'] = None
                 cursor.execute("UPDATE " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
                                + set_clause + " " + build_where({"ID": None}),
                                criteria.values())

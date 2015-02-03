@@ -26,7 +26,9 @@ class FollowerHandler(tornado.web.RequestHandler):
 
 class ArtistLogoutHandler(tornado.web.RequestHandler):
     def put(self):
-        self.clear_cookie("mycookie")
+        data = escape.json_decode(self.request.body)
+        dao = user.UserDAO()
+        dao.upsert(cookie=data['auth-token'],logout=True)
 
 
 class ArtistLoginHandler(tornado.web.RequestHandler):
