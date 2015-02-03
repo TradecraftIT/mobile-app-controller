@@ -8,6 +8,10 @@ def xstr(s):
     return '' if s is None else str(s)
 
 
+def str2bool(s):
+    return xstr(s).upper() == 'TRUE'
+
+
 class UserDAO:
 
     def __init__(self):
@@ -22,7 +26,6 @@ class UserDAO:
         conn = get_connection()
         with conn.cursor(try_plain_query=True) as cursor:
             criteria = {"connected_to": int(user_id)}
-            print(int(user_id))
             if is_artist:
                 response = """
             {
@@ -38,26 +41,40 @@ class UserDAO:
                     current = '{'
                     current += "'email': \"" + xstr(row[0]) + '\", '
                     current += "'facebook-id': \"" + xstr(row[1]) + '\", '
-                    current += "'twitter-id': \"" + xstr(row[2]) +"\""
+                    current += "'twitter-id': \"" + xstr(row[2]) + "\""
                     current += '}'
                     matches.append(current)
                 response += ', '.join(matches)
             else:
                 response = """
             {
-                   'artists': [{
+                   'artists': [
                    """
-                cursor.execute("SELECT USERNAME,ID,FACEBOOK_ID,TWITTER_ID FROM "
-                               + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
-                               + build_where(criteria), criteria.values())
+                cursor.execute("SELECT ARTIST_ID,NAME,THUMBNAIL,ALLOWS_MESSAGES FROM "
+                               + Constants.SCHEMA_NAME.value+"."+Constants.ARTIST_PROFILE.value
+                               + " AP LEFT JOIN " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
+                               + " USER ON AP.artist_id = USER.id WHERE USER.ID IN ( SELECT USER FROM " + Constants.SCHEMA_NAME.value
+                               + "." + Constants.USER_CONNECTIONS.value + " WHERE CONNECTED_TO = ?"
+                               + ")", criteria.values())
+
+                matches = []
+                match_dict = {}
                 for row in cursor:
-                    pass
+                    current = '{'
+                    current += "'id': \"" + xstr(row[0]) + '\", '
+                    current += "'name': \"" + xstr(row[1]) + '\", '
+                    current += "'avatar-url-thumb': \"" + xstr(row[2]) + '\", '
+                    current += "'allows-messages': boolean" + str(str2bool(row[3])).lower() + "boolean"
+                    current += '}'
+                    matches.append(current)
+                response += ', '.join(matches)
 
         response += """
                 ]
             }
                     """
         response = response.replace("'", '"')
+        response = response.replace("boolean", '')
         print('Response: ' + response)
         response = json.loads(response)
         return response

@@ -68,6 +68,7 @@ class Constants(Enum):
         Holds constants that are database related.  This prevents magic string from appearing
         everywhere
     """
+    ARTIST_PROFILE = "artist_profiles"
     SCHEMA_NAME = "fanmobi"
     USERS = "users"
-    USER_CONNECTIONS= "user_connections"
+    USER_CONNECTIONS = "user_connections"

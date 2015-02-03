@@ -39,3 +39,16 @@ CREATE TABLE `fanmobi`.`user_connections` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
   COMMENT = 'Represents the connections a user has, as a graph' ;
+
+CREATE TABLE `fanmobi`.`artist_profiles` (
+  `artist_id` INT NOT NULL,
+  `name` VARCHAR(255) NULL,
+  `thumbnail` VARCHAR(4000) NULL,
+  `allows_messages` VARCHAR(5) NULL DEFAULT 'true',
+  PRIMARY KEY (`artist_id`),
+  CONSTRAINT `artist_id_fk`
+  FOREIGN KEY (`artist_id`)
+  REFERENCES `fanmobi`.`users` (`ID`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+  COMMENT = 'Represents the profile of an artist';
