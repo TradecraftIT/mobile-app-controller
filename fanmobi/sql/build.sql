@@ -54,8 +54,8 @@ CREATE TABLE `fanmobi`.`artist_profiles` (
   COMMENT = 'Represents the profile of an artist';
 
 
-CREATE TABLE `artist_locations` (
-  `ID` int(11) NOT NULL DEFAULT '0',
+CREATE TABLE `fanmobi`.`artist_locations` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
   `latitude` float(10,6) NOT NULL,
   `longitude` float(10,6) NOT NULL,
   `show_start` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
