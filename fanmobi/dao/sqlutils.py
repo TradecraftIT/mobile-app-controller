@@ -72,3 +72,4 @@ class Constants(Enum):
     SCHEMA_NAME = "fanmobi"
     USERS = "users"
     USER_CONNECTIONS = "user_connections"
+    ARTIST_LOCATIONS = "artist_locations"

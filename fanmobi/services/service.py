@@ -24,6 +24,30 @@ class FollowerHandler(tornado.web.RequestHandler):
         dao.link(user_id=data['user-id'], artist_id=artist_id)
 
 
+class ArtistLocationHandler(tornado.web.RequestHandler):
+    def put(self):
+        """
+        updates current artist location
+        :return:
+        """
+        auth_token = self.request.headers.get('auth-token')
+        data = escape.json_decode(self.request.body)
+        dao = user.UserDAO()
+        response = dao.user_exists(auth_token=auth_token)
+        if response['exists']:
+            dao.find()
+            dao.update_location(latitude=data['latitude'],
+                                longitude=data['longitude'],
+                                show_start=data['next-show-start'],
+                                show_end=data['next-show-end'],
+                                artist_id=response['id'])
+        else:
+            self.write("""
+            {
+            "message": "Invalid auth token"
+            }
+            """)
+
 class ArtistLogoutHandler(tornado.web.RequestHandler):
     def put(self):
         data = escape.json_decode(self.request.body)
@@ -71,6 +95,7 @@ class UserHandler(tornado.web.RequestHandler):
 application = tornado.web.Application([
     (r"/artist/login", ArtistLoginHandler),
     (r"/artist/logout", ArtistLogoutHandler),
+    (r"/artist/update-location", ArtistLocationHandler),
     (r"/artists/[0-9]+/connected", FollowerHandler),
     (r"/user/", UserHandler),
     (r"/user/connected", UserHandler),

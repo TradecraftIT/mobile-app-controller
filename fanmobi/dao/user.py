@@ -18,6 +18,24 @@ class UserDAO:
     def __init__(self):
         pass
 
+
+    def update_location(self, latitude, longitude, artist_id, show_start, show_end=None):
+        """
+        Updates a logged in artist's location
+        :param latitude:
+        :param longitude:
+        :param artist_id:
+        :param show_start: the timestamp that represents when this show starts
+        :param show_end: optional parameter
+        :return:
+        """
+        conn = get_connection()
+        with conn.cursor(try_plain_query=True) as cursor:
+            cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.ARTIST_LOCATIONS.value +
+                           "(latitude,longitude,show_start,show_end,artist_id) VALUES(?,?,?,?,?)",
+                           (latitude, longitude, show_start ,show_end, artist_id))
+
+
     def connected_to(self, user_id=None, is_artist=False):
         """
         Retrieves the users connected to the supplied user ID
@@ -217,9 +235,6 @@ class UserDAO:
                                + set_clause + " " + build_where({"ID": None}),
                                criteria.values())
         return user_id
-
-    def delete(self):
-        pass
 
     def find(self, criteria=None):
         conn = get_connection()
