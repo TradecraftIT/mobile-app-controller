@@ -53,15 +53,14 @@ CREATE TABLE `fanmobi`.`artist_profiles` (
     ON UPDATE NO ACTION)
   COMMENT = 'Represents the profile of an artist';
 
-
 CREATE TABLE `fanmobi`.`artist_locations` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
   `latitude` float(10,6) NOT NULL,
   `longitude` float(10,6) NOT NULL,
-  `show_start` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `show_end` timestamp NULL DEFAULT NULL,
+  `show_start` bigint(20) DEFAULT NULL,
+  `show_end` bigint(20) DEFAULT NULL,
   `artist_id` int(11) NOT NULL,
   PRIMARY KEY (`ID`),
   KEY `user_location_fk_idx` (`artist_id`),
   CONSTRAINT `user_location_fk` FOREIGN KEY (`artist_id`) REFERENCES `users` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;

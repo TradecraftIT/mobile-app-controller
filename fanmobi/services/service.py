@@ -1,7 +1,9 @@
+from datetime import datetime
+from fanmobi.dao import user
+import time
 import tornado.escape as escape
 import tornado.ioloop
 import tornado.web
-from fanmobi.dao import user
 import uuid
 
 
@@ -33,13 +35,16 @@ class ArtistLocationHandler(tornado.web.RequestHandler):
         auth_token = self.request.headers.get('auth-token')
         data = escape.json_decode(self.request.body)
         dao = user.UserDAO()
+        #2012-09-17T21:30:54-0400
+        date_start = time.mktime(datetime.strptime(data['next-show-start'], '%Y-%m-%dT%H:%M:%S%z').timetuple())
+        date_end = time.mktime(datetime.strptime(data['next-show-end'], '%Y-%m-%dT%H:%M:%S%z').timetuple())
+        print(date_end)
         response = dao.user_exists(auth_token=auth_token)
         if response['exists']:
-            dao.find()
             dao.update_location(latitude=data['latitude'],
                                 longitude=data['longitude'],
-                                show_start=data['next-show-start'],
-                                show_end=data['next-show-end'],
+                                show_start=date_start,
+                                show_end=date_end,
                                 artist_id=response['id'])
         else:
             self.write("""
@@ -47,6 +52,7 @@ class ArtistLocationHandler(tornado.web.RequestHandler):
             "message": "Invalid auth token"
             }
             """)
+
 
 class ArtistLogoutHandler(tornado.web.RequestHandler):
     def put(self):

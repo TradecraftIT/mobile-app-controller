@@ -33,7 +33,7 @@ class UserDAO:
         with conn.cursor(try_plain_query=True) as cursor:
             cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.ARTIST_LOCATIONS.value +
                            "(latitude,longitude,show_start,show_end,artist_id) VALUES(?,?,?,?,?)",
-                           (latitude, longitude, show_start ,show_end, artist_id))
+                           (latitude, longitude, show_start, show_end, artist_id))
 
 
     def connected_to(self, user_id=None, is_artist=False):
