@@ -40,18 +40,23 @@ CREATE TABLE `fanmobi`.`user_connections` (
     ON UPDATE NO ACTION)
   COMMENT = 'Represents the connections a user has, as a graph' ;
 
-CREATE TABLE `fanmobi`.`artist_profiles` (
-  `artist_id` INT NOT NULL,
-  `name` VARCHAR(255) NULL,
-  `thumbnail` VARCHAR(4000) NULL,
-  `allows_messages` VARCHAR(5) NULL DEFAULT 'true',
+CREATE TABLE `artist_profiles` (
+  `artist_id` int(11) NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `thumbnail` varchar(4000) DEFAULT NULL,
+  `allows_messages` varchar(5) DEFAULT 'true',
+  `avatar_url` varchar(4000) DEFAULT NULL,
+  `website` varchar(2083) DEFAULT NULL,
+  `youtube_id` varchar(45) DEFAULT NULL,
+  `soundcloud_id` varchar(45) DEFAULT NULL,
+  `itunes_url` varchar(2083) DEFAULT NULL,
+  `ticketmaster_url` varchar(2083) DEFAULT NULL,
+  `merchandise_url` varchar(2083) DEFAULT NULL,
+  `paypal_email` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`artist_id`),
-  CONSTRAINT `artist_id_fk`
-  FOREIGN KEY (`artist_id`)
-  REFERENCES `fanmobi`.`users` (`ID`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-  COMMENT = 'Represents the profile of an artist';
+  CONSTRAINT `artist_id_fk` FOREIGN KEY (`artist_id`) REFERENCES `users` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 
 CREATE TABLE `fanmobi`.`artist_locations` (
   `ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -64,3 +69,8 @@ CREATE TABLE `fanmobi`.`artist_locations` (
   KEY `user_location_fk_idx` (`artist_id`),
   CONSTRAINT `user_location_fk` FOREIGN KEY (`artist_id`) REFERENCES `users` (`ID`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `fanmobi`.`artist_genres` (
+  `artist_id` INT NOT NULL,
+  `genre` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`artist_id`, `genre`));

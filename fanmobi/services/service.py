@@ -7,6 +7,13 @@ import tornado.web
 import uuid
 
 
+class ArtistInfoHandler(tornado.web.RequestHandler):
+    def get(self):
+        dao = user.UserDAO()
+        artist_id = str(self.request.uri).split("/")[2]
+        self.write(dao.artist_info(artist_id=artist_id))
+
+
 class FollowerHandler(tornado.web.RequestHandler):
     def get(self):
         dao = user.UserDAO()
@@ -110,6 +117,7 @@ application = tornado.web.Application([
     (r"/artist/logout", ArtistLogoutHandler),
     (r"/artist/update-location", ArtistLocationHandler),
     (r"/artists/radius", ArtistLocationHandler),
+    (r"/artists/[0-9]+", ArtistInfoHandler),
     (r"/artists/[0-9]+/connected", FollowerHandler),
     (r"/user/", UserHandler),
     (r"/user/connected", UserHandler),
