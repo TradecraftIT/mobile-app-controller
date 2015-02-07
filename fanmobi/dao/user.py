@@ -17,8 +17,67 @@ def str2bool(s):
 class UserDAO:
 
     MILLIS_IN_HOUR = 3600000
+
     def __init__(self):
         pass
+
+    def artist_info(self, artist_id):
+        """
+        Retrieves artist info based on the supplied ID
+        :param artist_id:
+        :return:
+        """
+        conn = get_connection()
+        with conn.cursor(try_plain_query=True) as cursor:
+            cursor.execute("SELECT AP.ARTIST_ID,AP.NAME,AP.THUMBNAIL,AP.AVATAR_URL,"
+                           " AP.WEBSITE,AP.FACEBOOK_ID,AP.TWITTER_ID,AP.YOUTUBE_ID,AP.SOUNDCLOUD_ID,"
+                           " AP.ITUNES_URL,AP.TICKETMASTER_URL,AP.MERCHANDISE_URL,"
+                           " AP.PAYPAL_EMAIL,AP.HOMETOWN,AP.BIOGRAPHY,"
+                           " AG.GENRE FROM FANMOBI.ARTIST_PROFILES AP "
+                           "LEFT JOIN FANMOBI.ARTIST_GENRES AG "
+                           "ON AP.ARTIST_ID = AG.ARTIST_ID "
+                           "WHERE AP.ARTIST_ID =?", [artist_id])
+            response = """
+            {
+                   'artists': [
+                   """
+            matches = []
+            genres = []
+            processed_first = False
+            for row in cursor:
+                if not processed_first:
+                    current = '{'
+                    current += "'id': \"" + xstr(row[0]) + '\", '
+                    current += "'name': \"" + xstr(row[1]) + '\", '
+                    current += "'avatar-url-thumb': \"" + xstr(row[2]) + '\", '
+                    current += "'avatar-url': \"" + xstr(row[3]) + '\", '
+                    current += "'website': \"" + xstr(row[4]) + '\", '
+                    current += "'facebook-id': \"" + xstr(row[5]) + '\", '
+                    current += "'twitter-id': \"" + xstr(row[6]) + '\", '
+                    current += "'youtube-id': \"" + xstr(row[7]) + '\", '
+                    current += "'soundcloud-id': \"" + xstr(row[8]) + '\", '
+                    current += "'itunes-url': \"" + xstr(row[9]) + '\", '
+                    current += "'ticket-url': \"" + xstr(row[10]) + '\", '
+                    current += "'merch-url': \"" + xstr(row[11]) + '\", '
+                    current += "'paypal-email': \"" + xstr(row[12]) + '\", '
+                    current += "'hometown': \"" + xstr(row[13]) + '\", '
+                    current += "'bio': \"" + xstr(row[14]) + '\", '
+                    processed_first = True
+                if row[15]:
+                    genres.append(row[15])
+            current += "'genres': \"["+', '.join(genres)+"]\""
+            current += '}'
+            matches.append(current)
+            response += current
+
+        response += """
+                    ]
+                }
+                        """
+        response = response.replace("'", '"')
+        print('Response: ' + response)
+        response = json.loads(response)
+        return response
 
     def in_radius(self, radius=0.0, longitude=0.0, latitude=0.0):
         """
@@ -59,7 +118,7 @@ class UserDAO:
                                 ORDER BY
                                     distance
                                 ) x ) """,
-                           (float(latitude), float(latitude), float(longitude),float(longitude), float(latitude),float(latitude), float(radius)))
+                           (float(latitude), float(latitude), float(longitude), float(longitude), float(latitude), float(latitude), float(radius)))
             response = """
             {
                    'artists': [
