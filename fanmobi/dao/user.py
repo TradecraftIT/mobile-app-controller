@@ -2,6 +2,7 @@ from collections import OrderedDict
 import json
 from oursql import IntegrityError
 import uuid
+import time
 from .sqlutils import get_connection, Constants, build_where, hash_password,build_set
 
 
@@ -15,9 +16,90 @@ def str2bool(s):
 
 class UserDAO:
 
+    MILLIS_IN_HOUR = 3600000
     def __init__(self):
         pass
 
+    def in_radius(self, radius=0.0, longitude=0.0, latitude=0.0):
+        """
+           Determines all of the artists within the radius of the specified
+           latitude and longitude
+        :param radius:
+        :param longitude:
+        :param latitude:
+        :return:
+        """
+        conn = get_connection()
+        with conn.cursor(try_plain_query=True) as cursor:
+            cursor.execute("SELECT AP.ARTIST_ID,AP.NAME,AP.THUMBNAIL,"
+                           "UNIX_TIMESTAMP(AL.LOGGED), AL.SHOW_START,AL.SHOW_END FROM "
+                           + Constants.SCHEMA_NAME.value+"."+Constants.ARTIST_LOCATIONS.value + " AS AL, "
+                           + Constants.SCHEMA_NAME.value+"."+Constants.ARTIST_PROFILE.value + " AS AP "
+                           + " WHERE AP.ARTIST_ID = AL.ARTIST_ID AND AL.ARTIST_ID IN( "
+                           + """select `artist_id`
+                            from(
+                                SELECT
+                                    artist_id,
+                                    (
+                                        6373 *
+                                        acos(
+                                            cos( radians( ? ) ) *
+                                            cos( radians( ? ) ) *
+                                            cos(
+                                                radians( ? ) - radians(? )
+                                            ) +
+                                            sin(radians(? )) *
+                                            sin(radians(?))
+                                        )
+                                    ) distance
+                                FROM """ + Constants.SCHEMA_NAME.value+"."+Constants.ARTIST_PROFILE.value
+                           + """
+                                HAVING
+                                    distance < ?
+                                ORDER BY
+                                    distance
+                                ) x ) """,
+                           (float(latitude), float(latitude), float(longitude),float(longitude), float(latitude),float(latitude), float(radius)))
+            response = """
+            {
+                   'artists': [
+                   """
+            matches = []
+            for row in cursor:
+                now = int(time.time())
+                """
+                For an artist to have a “current broadcast point,” a couple things need to line up:
+                1. The last logged location update for that artist needs to be more recent than an hour
+                       before show start.
+                 2. The current time needs to be between show start and show end.
+                """
+
+                if row[4] and row[5]:
+                    during_show = (int(row[4]) <= now <= row[5])
+                    last_logged = (now + self.MILLIS_IN_HOUR >= row[4])
+                else:
+                    during_show = False
+                    last_logged = False
+
+                broadcasting = during_show and last_logged
+                current = '{'
+                current += "'id': \"" + xstr(row[0]) + '\", '
+                current += "'name': \"" + xstr(row[1]) + '\", '
+                current += "'avatar-url-thumb': \"" + xstr(row[2]) + '\", '
+                current += "'currently-broadcasting': boolean" + str(str2bool(broadcasting)).lower() + "boolean"
+                current += '}'
+                matches.append(current)
+            response += ', '.join(matches)
+
+        response += """
+                    ]
+                }
+                        """
+        response = response.replace("'", '"')
+        response = response.replace("boolean", '')
+        print('Response: ' + response)
+        response = json.loads(response)
+        return response
 
     def update_location(self, latitude, longitude, artist_id, show_start, show_end=None):
         """

@@ -27,6 +27,13 @@ class FollowerHandler(tornado.web.RequestHandler):
 
 
 class ArtistLocationHandler(tornado.web.RequestHandler):
+    def post(self):
+        data = escape.json_decode(self.request.body)
+        dao = user.UserDAO()
+        self.write(dao.in_radius(radius=data['radius'],
+                                 longitude=data['longitude'],
+                                 latitude=data['latitude']))
+
     def put(self):
         """
         updates current artist location
@@ -102,6 +109,7 @@ application = tornado.web.Application([
     (r"/artist/login", ArtistLoginHandler),
     (r"/artist/logout", ArtistLogoutHandler),
     (r"/artist/update-location", ArtistLocationHandler),
+    (r"/artists/radius", ArtistLocationHandler),
     (r"/artists/[0-9]+/connected", FollowerHandler),
     (r"/user/", UserHandler),
     (r"/user/connected", UserHandler),
