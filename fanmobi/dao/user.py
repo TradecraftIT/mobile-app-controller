@@ -185,7 +185,6 @@ class UserDAO:
         """
         conn = get_connection()
         with conn.cursor(try_plain_query=True) as cursor:
-            criteria = {"connected_to": int(user_id)}
             if is_artist:
                 response = """
             {
@@ -195,7 +194,7 @@ class UserDAO:
                                + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
                                + " where ID IN ( SELECT USER FROM " + Constants.SCHEMA_NAME.value
                                + "." + Constants.USER_CONNECTIONS.value + " WHERE CONNECTED_TO = ?"
-                               + ")", criteria.values())
+                               + ")", [int(user_id)])
                 matches = []
                 for row in cursor:
                     current = '{'
@@ -215,7 +214,7 @@ class UserDAO:
                                + " AP LEFT JOIN " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
                                + " USER ON AP.artist_id = USER.id WHERE USER.ID IN ( SELECT USER FROM " + Constants.SCHEMA_NAME.value
                                + "." + Constants.USER_CONNECTIONS.value + " WHERE CONNECTED_TO = ?"
-                               + ")", criteria.values())
+                               + ")", [int(user_id)])
 
                 matches = []
                 for row in cursor:
