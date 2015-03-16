@@ -299,7 +299,8 @@ class UserDAO:
         return {"authenticated": False, "token": None}
 
 
-    def user_exists(self, auth_token=None, email_address=None, password=None, facebook_id=None, twitter_id=None, user_id=None):
+    def user_exists(self, auth_token=None, email_address=None, password=None, facebook_id=None, twitter_id=None,
+                    user_id=None, unique_id=None):
         """
            Determines if this user exists or not based on supplied criteria
         :param auth_token: - since the auth token is a UUID this should be guaranteed unique
@@ -307,6 +308,7 @@ class UserDAO:
         :param facebook_id:
         :param twitter_id:
         :param user_id:
+        :parama unique_id: the UUID of the user
         :return:
         """
         conn = get_connection()
@@ -323,11 +325,13 @@ class UserDAO:
             criteria['id'] = user_id
         elif auth_token:
             criteria['cookie'] = auth_token
+        elif unique_id:
+            criteria['unique_id'] = unique_id
         if len(criteria) > 0:
             with conn.cursor(try_plain_query=True) as cursor:
                 print(criteria.values())
                 print(build_where(criteria))
-                cursor.execute("SELECT COUNT(1), ID FROM " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
+                cursor.execute("SELECT COUNT(1), ID FROM fanmobi.users"
                                + build_where(criteria), criteria.values())
                 for row in cursor:
                     print(row)
@@ -335,7 +339,7 @@ class UserDAO:
                             return {"exists": True, "id": row[1]}
         return {"exists": False, "id": -1}
 
-    def upsert(self, cookie=None, email_address=None, password=None, facebook_id=None, twitter_id=None, logout=False):
+    def upsert(self, unique_id=None, cookie=None, email_address=None, password=None, facebook_id=None, twitter_id=None, logout=False):
         """
           Updates or inserts a new record depending on if the user was found
         :param email_address:
@@ -347,14 +351,16 @@ class UserDAO:
         """
         conn = get_connection()
         with conn.cursor(try_plain_query=True) as cursor:
-            existence_check = self.user_exists(auth_token=cookie, email_address=email_address,
-                                               facebook_id=facebook_id, twitter_id=twitter_id)
+            # existence_check = self.user_exists(auth_token=cookie, email_address=email_address,
+            #                                    facebook_id=facebook_id, twitter_id=twitter_id)
+            existence_check = self.user_exists(unique_id=unique_id)
             print(existence_check)
             if not existence_check['exists']:
                 hashed = hash_password(password)
-                cursor.execute("INSERT INTO " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
-                               + "(username, password, salt, facebook_id, twitter_id) VALUES(?,?,?,?,?)"
-                               , (email_address, hashed['hashed_password'], hashed['salt'], facebook_id, twitter_id))
+                cursor.execute("INSERT INTO fanmobi.users "
+                               + "(username, password, salt, facebook_id, twitter_id, unique_id) VALUES(?,?,?,?,?,?)"
+                               , (email_address, hashed['hashed_password'], hashed['salt'], facebook_id, twitter_id,
+                                  unique_id))
                 user_id = cursor.lastrowid
             else:
                 user_id = existence_check['id']
@@ -367,11 +373,13 @@ class UserDAO:
                     criteria['twitter_id'] = twitter_id
                 if cookie:
                     criteria['cookie'] = cookie
+                if unique_id:
+                    criteria['unique_id'] = unique_id
                 set_clause = build_set(criteria)
                 criteria['ID'] = user_id
                 if logout:
                     criteria['cookie'] = None
-                cursor.execute("UPDATE " + Constants.SCHEMA_NAME.value+"."+Constants.USERS.value
+                cursor.execute("UPDATE fanmobi.users "
                                + set_clause + " " + build_where({"ID": None}),
                                criteria.values())
         return user_id

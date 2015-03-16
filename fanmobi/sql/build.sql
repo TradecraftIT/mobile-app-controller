@@ -8,11 +8,13 @@ CREATE TABLE `fanmobi`.`users`(
   `facebook_id` varchar(45) DEFAULT NULL,
   `twitter_id` varchar(45) DEFAULT NULL,
   `cookie` varchar(255) DEFAULT NULL,
+  `unique_id` VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY (`ID`),
   UNIQUE KEY `salt_UNIQUE` (`salt`),
   UNIQUE KEY `username_UNIQUE` (`username`),
   UNIQUE KEY `facebook_id_UNIQUE` (`facebook_id`),
-  UNIQUE KEY `twitter_id_UNIQUE` (`twitter_id`)
+  UNIQUE KEY `twitter_id_UNIQUE` (`twitter_id`),
+  UNIQUE KEY `unique_id_UNIQUE` (`unique_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8 COMMENT='the users of the system.  The username will be an email address';
 
 
@@ -40,7 +42,7 @@ CREATE TABLE `fanmobi`.`user_connections` (
     ON UPDATE NO ACTION)
   COMMENT = 'Represents the connections a user has, as a graph' ;
 
-CREATE TABLE `artist_profiles` (
+CREATE TABLE `fanmobi`.`artist_profiles` (
   `artist_id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `thumbnail` varchar(4000) DEFAULT NULL,

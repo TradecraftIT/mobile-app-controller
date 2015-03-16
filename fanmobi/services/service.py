@@ -104,12 +104,14 @@ class UserHandler(tornado.web.RequestHandler):
 
     def put(self):
         if not self.request.body:
-            data = {"email": None, "password": None, "facebook-id": None, "twitter-id": None}
+            #data = {"email": None, "password": None, "facebook-id": None, "twitter-id": None}
+            data = {"unique-id": None}
         else:
             data = escape.json_decode(self.request.body)
         dao = user.UserDAO()
-        generated_id = dao.upsert(email_address=data['email'], password=data['password'],
-                                  facebook_id=data['facebook-id'], twitter_id=data['twitter-id'])
+        generated_id = dao.upsert(unique_id=data['unique-id'])
+        # generated_id = dao.upsert(email_address=data['email'], password=data['password'],
+        #                           facebook_id=data['facebook-id'], twitter_id=data['twitter-id'])
         self.write("{ \"user_id\": \"" + str(generated_id) + "\" }")
 
 application = tornado.web.Application([
