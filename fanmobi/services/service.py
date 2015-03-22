@@ -1,5 +1,5 @@
 from datetime import datetime
-from fanmobi.dao import user
+from dao import user
 import time
 import tornado.escape as escape
 import tornado.ioloop
