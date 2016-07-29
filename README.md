@@ -1,5 +1,5 @@
-# fanmobi-controller
-Backend, web services, and database for FanMobi
+# mobile-app-controller
+Backend, web services, and database for mobile app
 
 
 #build steps
